@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>星河长卷 · AI编程课1班打卡历程</title>
+<style>
+/* ========== Reset & Base ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  overflow: hidden;
+  height: 100%;
+  background: #050a18;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== Scroll Container ========== */
+.scroll-container {
+  display: flex;
+  width: 600vw;
+  height: 100vh;
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+/* ========== Lesson Section ========== */
+.lesson {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ========== Canvas Layer ========== */
+.particle-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ========== Content ========== */
+.lesson-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 0 24px;
+  max-width: 720px;
+  width: 100%;
+}
+
+.lesson-number {
+  font-size: 14px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 12px;
+  font-weight: 300;
+}
+
+.lesson-title {
+  font-size: clamp(48px, 10vw, 96px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  text-shadow: 0 0 40px currentColor, 0 0 80px currentColor;
+  letter-spacing: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 30px currentColor);
+}
+
+.lesson-subtitle {
+  font-size: clamp(16px, 3vw, 24px);
+  font-weight: 300;
+  opacity: 0.8;
+  margin-bottom: 40px;
+  letter-spacing: 4px;
+}
+
+/* ========== Theme Icon ========== */
+.lesson-icon {
+  font-size: clamp(48px, 8vw, 80px);
+  margin-bottom: 24px;
+  display: block;
+  animation: iconFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px currentColor);
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ========== Data Bar ========== */
+.data-bar {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(80%, 480px);
+  z-index: 10;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.data-label { font-weight: 300; letter-spacing: 2px; }
+.data-value { font-weight: 700; font-size: 20px; opacity: 1; }
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s;
+  width: 0;
+  box-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+}
+
+.progress-fill.animate { /* width set inline */ }
+
+/* ========== Lesson Themes ========== */
+.lesson-1 {
+  background: linear-gradient(135deg, #0a0e27 0%, #0d1b3e 30%, #132952 60%, #0a0e27 100%);
+}
+.lesson-1 .lesson-title { color: #ffd700; }
+.lesson-1 .progress-fill { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #ffd700; }
+.lesson-1 .data-value { color: #ffd700; }
+
+.lesson-2 {
+  background: linear-gradient(135deg, #041428 0%, #0a2a4a 30%, #0d3d5c 60%, #041428 100%);
+}
+.lesson-2 .lesson-title { color: #00e5ff; }
+.lesson-2 .progress-fill { background: linear-gradient(90deg, #00bcd4, #00e5ff); color: #00e5ff; }
+.lesson-2 .data-value { color: #00e5ff; }
+
+.lesson-3 {
+  background: linear-gradient(135deg, #080c1a 0%, #101830 30%, #182040 60%, #080c1a 100%);
+}
+.lesson-3 .lesson-title { color: #c0c8e0; }
+.lesson-3 .progress-fill { background: linear-gradient(90deg, #8899bb, #c0c8e0); color: #c0c8e0; }
+.lesson-3 .data-value { color: #c0c8e0; }
+
+.lesson-4 {
+  background: linear-gradient(135deg, #0a0610 0%, #1a0a1a 30%, #2a1020 60%, #0a0610 100%);
+}
+.lesson-4 .lesson-title { color: #e83030; }
+.lesson-4 .progress-fill { background: linear-gradient(90deg, #b71c1c, #e83030); color: #e83030; }
+.lesson-4 .data-value { color: #e83030; }
+
+.lesson-5 {
+  background: linear-gradient(135deg, #0d0818 0%, #1a1035 30%, #2d1a5c 60%, #0d0818 100%);
+}
+.lesson-5 .lesson-title { color: #d4a0ff; }
+.lesson-5 .progress-fill { background: linear-gradient(90deg, #9c27b0, #d4a0ff); color: #d4a0ff; }
+.lesson-5 .data-value { color: #d4a0ff; }
+
+.lesson-6 {
+  background: linear-gradient(135deg, #050810 0%, #0c1220 30%, #101a2c 60%, #050810 100%);
+}
+.lesson-6 .lesson-title { color: #ff9800; }
+.lesson-6 .progress-fill { background: linear-gradient(90deg, #e65100, #ff9800); color: #ff9800; }
+.lesson-6 .data-value { color: #ff9800; }
+
+/* ========== Top Nav ========== */
+.top-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  background: linear-gradient(180deg, rgba(5,10,24,0.95) 0%, rgba(5,10,24,0) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-dot {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-dot.active {
+  width: 56px;
+  background: rgba(255,255,255,0.6);
+}
+
+.nav-dot::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.5s;
+  border-radius: 2px;
+}
+
+.nav-dot.active::after {
+  opacity: 1;
+}
+
+.nav-dot-1 { color: #ffd700; }
+.nav-dot-2 { color: #00e5ff; }
+.nav-dot-3 { color: #c0c8e0; }
+.nav-dot-4 { color: #e83030; }
+.nav-dot-5 { color: #d4a0ff; }
+.nav-dot-6 { color: #ff9800; }
+
+.nav-label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  letter-spacing: 1px;
+}
+
+.nav-dot:hover .nav-label,
+.nav-dot.active .nav-label {
+  opacity: 0.8;
+}
+
+/* ========== Scroll Hint ========== */
+.scroll-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  font-size: 12px;
+  opacity: 0.4;
+  letter-spacing: 2px;
+  animation: hintPulse 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.5s;
+}
+
+.scroll-hint.hidden { opacity: 0; pointer-events: none; }
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) translateX(0); }
+  50% { opacity: 0.7; transform: translateX(-50%) translateX(6px); }
+}
+
+.scroll-arrow {
+  display: inline-block;
+  animation: arrowSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowSlide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+/* ========== Decorative Lines ========== */
+.deco-line {
+  position: absolute;
+  z-index: 2;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.deco-line-left {
+  left: 5%;
+  top: 15%;
+  width: 1px;
+  height: 70%;
+  background: linear-gradient(180deg, transparent, currentColor, transparent);
+}
+
+.deco-line-right {
+  right: 5%;
+  top: 15%;
+  width: 1px;
+  height: 70%;
+  background: linear-gradient(180deg, transparent, currentColor, transparent);
+}
+
+/* ========== Transition Glow ========== */
+.transition-glow {
+  position: absolute;
+  right: -1px;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03));
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 640px) {
+  .lesson-number { font-size: 12px; margin-bottom: 8px; }
+  .lesson-subtitle { font-size: 14px; margin-bottom: 24px; letter-spacing: 2px; }
+  .lesson-icon { font-size: 40px; margin-bottom: 16px; }
+  .data-bar { bottom: 60px; width: 85%; }
+  .data-row { font-size: 12px; }
+  .data-value { font-size: 16px; }
+  .top-nav { height: 48px; }
+  .nav-dot { width: 28px; height: 3px; }
+  .nav-dot.active { width: 44px; }
+}
+
+/* ========== Page Load Animation ========== */
+.lesson-content {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.lesson.active .lesson-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== Starfield Overlay ========== */
+.starfield-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ========== Bottom class info ========== */
+.class-info {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  font-size: 11px;
+  opacity: 0.3;
+  letter-spacing: 1px;
+}
+
+/* ========== Page counter ========== */
+.page-counter {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 100;
+  font-size: 13px;
+  opacity: 0.5;
+  letter-spacing: 2px;
+  font-weight: 300;
+}
+</style>
+</head>
+<body>
+
+<!-- Background Starfield -->
+<canvas id="starfield" class="starfield-overlay"></canvas>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div class="nav-dot nav-dot-1 active" data-index="0" onclick="goToLesson(0)">
+    <span class="nav-label">揽星</span>
+  </div>
+  <div class="nav-dot nav-dot-2" data-index="1" onclick="goToLesson(1)">
+    <span class="nav-label">竞渡</span>
+  </div>
+  <div class="nav-dot nav-dot-3" data-index="2" onclick="goToLesson(2)">
+    <span class="nav-label">破局</span>
+  </div>
+  <div class="nav-dot nav-dot-4" data-index="3" onclick="goToLesson(3)">
+    <span class="nav-label">执甲</span>
+  </div>
+  <div class="nav-dot nav-dot-5" data-index="4" onclick="goToLesson(4)">
+    <span class="nav-label">凝丹</span>
+  </div>
+  <div class="nav-dot nav-dot-6" data-index="5" onclick="goToLesson(5)">
+    <span class="nav-label">御潮</span>
+  </div>
+</nav>
+
+<!-- Scroll Container -->
+<div class="scroll-container" id="scrollContainer">
+
+  <!-- Lesson 1: 揽星 -->
+  <section class="lesson lesson-1 active" data-lesson="0">
+    <canvas class="particle-canvas" data-color="#ffd700"></canvas>
+    <div class="deco-line deco-line-left" style="color:#ffd700"></div>
+    <div class="deco-line deco-line-right" style="color:#ffd700"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">✦</span>
+      <div class="lesson-number">第 一 课</div>
+      <h1 class="lesson-title">揽 星</h1>
+      <p class="lesson-subtitle">编程入门 · 伸手摘星</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">27 / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">79%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="79%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 2: 竞渡 -->
+  <section class="lesson lesson-2" data-lesson="1">
+    <canvas class="particle-canvas" data-color="#00e5ff"></canvas>
+    <div class="deco-line deco-line-left" style="color:#00e5ff"></div>
+    <div class="deco-line deco-line-right" style="color:#00e5ff"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">⛵</span>
+      <div class="lesson-number">第 二 课</div>
+      <h1 class="lesson-title">竞 渡</h1>
+      <p class="lesson-subtitle">端午打卡 · 百舸争流</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">20 / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">59%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="59%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 3: 破局 -->
+  <section class="lesson lesson-3" data-lesson="2">
+    <canvas class="particle-canvas" data-color="#c0c8e0"></canvas>
+    <div class="deco-line deco-line-left" style="color:#c0c8e0"></div>
+    <div class="deco-line deco-line-right" style="color:#c0c8e0"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">⚡</span>
+      <div class="lesson-number">第 三 课</div>
+      <h1 class="lesson-title">破 局</h1>
+      <p class="lesson-subtitle">破局打卡 · 锋芒初露</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">15 / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">44%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="44%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 4: 执甲 -->
+  <section class="lesson lesson-4" data-lesson="3">
+    <canvas class="particle-canvas" data-color="#e83030"></canvas>
+    <div class="deco-line deco-line-left" style="color:#e83030"></div>
+    <div class="deco-line deco-line-right" style="color:#e83030"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">🛡️</span>
+      <div class="lesson-number">第 四 课</div>
+      <h1 class="lesson-title">执 甲</h1>
+      <p class="lesson-subtitle">龙虾Agent · 披甲上阵</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">15 / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">44%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="44%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 5: 凝丹 -->
+  <section class="lesson lesson-5" data-lesson="4">
+    <canvas class="particle-canvas" data-color="#d4a0ff"></canvas>
+    <div class="deco-line deco-line-left" style="color:#d4a0ff"></div>
+    <div class="deco-line deco-line-right" style="color:#d4a0ff"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">🔮</span>
+      <div class="lesson-number">第 五 课</div>
+      <h1 class="lesson-title">凝 丹</h1>
+      <p class="lesson-subtitle">技能萃取 · 修仙炼丹</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">7 / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">21%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="21%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lesson 6: 御潮 -->
+  <section class="lesson lesson-6" data-lesson="5">
+    <canvas class="particle-canvas" data-color="#ff9800"></canvas>
+    <div class="deco-line deco-line-left" style="color:#ff9800"></div>
+    <div class="deco-line deco-line-right" style="color:#ff9800"></div>
+    <div class="transition-glow"></div>
+    <div class="lesson-content">
+      <span class="lesson-icon">🌊</span>
+      <div class="lesson-number">第 六 课</div>
+      <h1 class="lesson-title">御 潮</h1>
+      <p class="lesson-subtitle">龙虾进阶 · 乘风破浪</p>
+    </div>
+    <div class="data-bar">
+      <div class="data-row">
+        <span class="data-label">打卡人数</span>
+        <span class="data-value">— / 34</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">完成率</span>
+        <span class="data-value">直播后上线</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" data-width="0%"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Scroll Hint -->
+<div class="scroll-hint" id="scrollHint">
+  <span>左右滑动探索</span>
+  <span class="scroll-arrow">→</span>
+</div>
+
+<!-- Page Counter -->
+<div class="page-counter" id="pageCounter">01 / 06</div>
+
+<!-- Class Info -->
+<div class="class-info">AI编程课 · 秋叶1班 · 34人</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ========== State ==========
+  let currentLesson = 0;
+  const totalLessons = 6;
+  let isAnimating = false;
+  const container = document.getElementById('scrollContainer');
+  const lessons = document.querySelectorAll('.lesson');
+  const navDots = document.querySelectorAll('.nav-dot');
+  const scrollHint = document.getElementById('scrollHint');
+  const pageCounter = document.getElementById('pageCounter');
+
+  // ========== Background Starfield ==========
+  const starCanvas = document.getElementById('starfield');
+  const starCtx = starCanvas.getContext('2d');
+  let stars = [];
+
+  function initStarfield() {
+    starCanvas.width = window.innerWidth;
+    starCanvas.height = window.innerHeight;
+    stars = [];
+    const count = Math.floor((starCanvas.width * starCanvas.height) / 3000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * starCanvas.width,
+        y: Math.random() * starCanvas.height,
+        size: Math.random() * 1.5 + 0.3,
+        alpha: Math.random() * 0.6 + 0.1,
+        speed: Math.random() * 0.0005 + 0.0002,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function drawStarfield(time) {
+    starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+    for (const star of stars) {
+      const twinkle = Math.sin(time * star.speed * 1000 + star.phase) * 0.3 + 0.7;
+      starCtx.beginPath();
+      starCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      starCtx.fillStyle = `rgba(255,255,255,${star.alpha * twinkle})`;
+      starCtx.fill();
+    }
+  }
+
+  // ========== Lesson Particle Canvas ==========
+  const particleCanvases = document.querySelectorAll('.particle-canvas');
+  const particleSystems = [];
+
+  function initLessonParticles() {
+    particleCanvases.forEach((canvas, i) => {
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      const color = canvas.dataset.color;
+      const particles = [];
+      const count = 40;
+
+      for (let j = 0; j < count; j++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3 - 0.15,
+          size: Math.random() * 3 + 1,
+          alpha: Math.random() * 0.5 + 0.1,
+          life: Math.random() * 200 + 100,
+          maxLife: 300,
+          color: color
+        });
+      }
+
+      particleSystems.push({ canvas, ctx, particles, color, active: i === 0 });
+    });
+  }
+
+  function drawLessonParticles(time) {
+    for (const sys of particleSystems) {
+      if (!sys.active) {
+        sys.ctx.clearRect(0, 0, sys.canvas.width, sys.canvas.height);
+        continue;
+      }
+
+      sys.ctx.clearRect(0, 0, sys.canvas.width, sys.canvas.height);
+
+      for (const p of sys.particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+
+        if (p.life <= 0 || p.x < -10 || p.x > sys.canvas.width + 10 || p.y < -10 || p.y > sys.canvas.height + 10) {
+          p.x = Math.random() * sys.canvas.width;
+          p.y = sys.canvas.height + Math.random() * 20;
+          p.vy = -(Math.random() * 0.4 + 0.1);
+          p.vx = (Math.random() - 0.5) * 0.3;
+          p.life = Math.random() * 200 + 100;
+        }
+
+        const lifeRatio = p.life / p.maxLife;
+        const alpha = p.alpha * lifeRatio;
+
+        sys.ctx.beginPath();
+        sys.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+
+        // Glow effect
+        const gradient = sys.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+        gradient.addColorStop(0, p.color + Math.floor(alpha * 255).toString(16).padStart(2, '0'));
+        gradient.addColorStop(1, p.color + '00');
+        sys.ctx.fillStyle = gradient;
+        sys.ctx.fill();
+
+        // Core
+        sys.ctx.beginPath();
+        sys.ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+        sys.ctx.fillStyle = `rgba(255,255,255,${alpha * 0.8})`;
+        sys.ctx.fill();
+      }
+    }
+  }
+
+  // ========== Navigation ==========
+  function goToLesson(index) {
+    if (isAnimating || index < 0 || index >= totalLessons || index === currentLesson) return;
+    isAnimating = true;
+
+    // Update active states
+    lessons[currentLesson].classList.remove('active');
+    lessons[index].classList.add('active');
+
+    // Update nav dots
+    navDots[currentLesson].classList.remove('active');
+    navDots[index].classList.add('active');
+
+    // Update particle systems
+    particleSystems[currentLesson].active = false;
+    particleSystems[index].active = true;
+
+    // Animate progress bar
+    const prevFills = lessons[currentLesson].querySelectorAll('.progress-fill');
+    prevFills.forEach(f => f.style.width = '0');
+
+    currentLesson = index;
+
+    // Transform container
+    container.style.transform = `translateX(-${currentLesson * 100}vw)`;
+
+    // Update page counter
+    pageCounter.textContent = `${String(currentLesson + 1).padStart(2, '0')} / ${String(totalLessons).padStart(2, '0')}`;
+
+    // Hide scroll hint after first navigation
+    if (currentLesson > 0) {
+      scrollHint.classList.add('hidden');
+    }
+
+    // Animate progress bar after transition
+    setTimeout(() => {
+      const fills = lessons[currentLesson].querySelectorAll('.progress-fill');
+      fills.forEach(f => {
+        f.style.width = f.dataset.width;
+      });
+      isAnimating = false;
+    }, 400);
+  }
+
+  // ========== Mouse Wheel ==========
+  let wheelTimeout;
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => {
+      if (e.deltaX > 30 || e.deltaY > 30) {
+        goToLesson(currentLesson + 1);
+      } else if (e.deltaX < -30 || e.deltaY < -30) {
+        goToLesson(currentLesson - 1);
+      }
+    }, 50);
+  }, { passive: false });
+
+  // ========== Touch Swipe ==========
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+
+  window.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    const dx = touchStartX - e.changedTouches[0].clientX;
+    const dy = touchStartY - e.changedTouches[0].clientY;
+    const dt = Date.now() - touchStartTime;
+
+    if (dt < 500 && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) goToLesson(currentLesson + 1);
+      else goToLesson(currentLesson - 1);
+    }
+  }, { passive: true });
+
+  // ========== Keyboard ==========
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      goToLesson(currentLesson + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      goToLesson(currentLesson - 1);
+    }
+  });
+
+  // ========== Animation Loop ==========
+  function animate(time) {
+    drawStarfield(time);
+    drawLessonParticles(time);
+    requestAnimationFrame(animate);
+  }
+
+  // ========== Resize ==========
+  window.addEventListener('resize', () => {
+    initStarfield();
+    particleCanvases.forEach((canvas) => {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    });
+  });
+
+  // ========== Init ==========
+  function init() {
+    initStarfield();
+    initLessonParticles();
+
+    // Animate first lesson's progress bar
+    setTimeout(() => {
+      const fills = lessons[0].querySelectorAll('.progress-fill');
+      fills.forEach(f => {
+        f.style.width = f.dataset.width;
+      });
+    }, 800);
+
+    requestAnimationFrame(animate);
+  }
+
+  // Wait for fonts & layout
+  if (document.readyState === 'complete') {
+    init();
+  } else {
+    window.addEventListener('load', init);
+  }
+
+})();
+</script>
+</body>
+</html>
