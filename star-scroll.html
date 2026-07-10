@@ -1027,7 +1027,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson1.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson1.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1038,7 +1038,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson2.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson2.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1049,7 +1049,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson3.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson3.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1060,7 +1060,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson4.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson4.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1071,7 +1071,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson5.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson5.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1082,7 +1082,7 @@ body {
     <div class="deco-line deco-line-right"></div>
     <div class="section-content lesson-content" style="width:100%;height:100%;display:flex;flex-direction:column;padding:0;margin:0">
       <div class="grid-wrapper" style="width:100%;flex:1;min-height:0">
-        <iframe src="lesson6.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
+        <iframe data-src="lesson6.html" style="width:100%;height:100%;border:none;" loading="lazy"></iframe>
       </div>
     </div>
   </section>
@@ -1702,6 +1702,8 @@ body {
 
     // Activate new
     sections[currentIndex].classList.add('active');
+    // Lazy load iframe for lesson sections
+    loadIframeForSection(currentIndex);
     // Trigger IP parade animation when entering IP section
     if (currentIndex === 8) {
       setTimeout(() => animateIPParade(), 200);
@@ -1838,77 +1840,103 @@ body {
     setInterval(fetchAllLessons, POLL_INTERVAL);
   }
 
+  // ========== Lazy Iframe Loading ==========
+  // Only load iframe when its section becomes active
+  var loadedIframes = {};
+  function loadIframeForSection(index) {
+    if (index < 2 || index > 7) return; // only lesson sections (index 2-7)
+    if (loadedIframes[index]) return; // already loaded
+    var section = sections[index];
+    if (!section) return;
+    var iframe = section.querySelector('iframe[data-src]');
+    if (iframe && iframe.dataset.src) {
+      iframe.src = iframe.dataset.src;
+      loadedIframes[index] = true;
+      // Inject touch listeners once this iframe loads
+      iframe.addEventListener('load', function() {
+        injectSingleIframeTouchListeners(iframe);
+      });
+    }
+  }
+
   // ========== Iframe Touch Forwarding ==========
   // Touch events inside iframes don't bubble to parent window.
   // We inject listeners into each same-origin iframe so horizontal swipes navigate.
+  function injectSingleIframeTouchListeners(iframe) {
+    function onIframeReady() {
+      try {
+        var iDoc = iframe.contentDocument;
+        var iWin = iframe.contentWindow;
+        if (!iDoc || !iWin) return;
+
+        // Hide header + share-btn
+        var hideStyle = iDoc.createElement('style');
+        hideStyle.textContent = '\
+          .header { display: none !important; }\
+          .share-btn { display: none !important; }\
+        ';
+        iDoc.head.appendChild(hideStyle);
+
+        // Scale content to fit: measure real content height, account for nav bar
+        setTimeout(function() {
+          var scene = iDoc.querySelector('.scene');
+          if (!scene) return;
+          var navH = 56;
+          var viewH = iWin.innerHeight || 700;
+          var availH = viewH - navH - 8; // space below nav + bottom margin
+
+          // Measure actual content height (sum of visible flex children)
+          var contentH = 0;
+          var kids = scene.children;
+          for (var i = 0; i < kids.length; i++) {
+            var el = kids[i];
+            if (el.offsetHeight > 0 && iWin.getComputedStyle(el).display !== 'none') {
+              contentH += el.offsetHeight;
+            }
+          }
+          // Fallback: use scene scrollHeight
+          if (contentH < 100) contentH = scene.scrollHeight || viewH;
+
+          if (contentH > availH) {
+            var z = availH / contentH;
+            scene.style.zoom = z.toFixed(3);
+          }
+          // Push scene down to clear nav bar
+          scene.style.marginTop = navH + 'px';
+          // Reduce scene height so zoomed content + marginTop fits in viewport
+          scene.style.height = availH + 'px';
+        }, 80);
+
+        // Touch forwarding for horizontal swipe
+        var iTouchX = 0, iTouchY = 0, iTouchTime = 0;
+        iWin.addEventListener('touchstart', function(e) {
+          iTouchX = e.touches[0].clientX;
+          iTouchY = e.touches[0].clientY;
+          iTouchTime = Date.now();
+        }, { passive: true });
+        iWin.addEventListener('touchend', function(e) {
+          var dx = iTouchX - e.changedTouches[0].clientX;
+          var dy = iTouchY - e.changedTouches[0].clientY;
+          if (Date.now() - iTouchTime < 500 && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (dx > 0) goTo(currentIndex + 1);
+            else goTo(currentIndex - 1);
+          }
+        }, { passive: true });
+      } catch(e) { /* cross-origin guard */ }
+    }
+    if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+      onIframeReady();
+    } else {
+      iframe.addEventListener('load', onIframeReady);
+    }
+  }
+
   function injectIframeTouchListeners() {
     const iframes = document.querySelectorAll('.lesson-content iframe');
     iframes.forEach(function(iframe) {
-      function onIframeReady() {
-        try {
-          var iDoc = iframe.contentDocument;
-          var iWin = iframe.contentWindow;
-          if (!iDoc || !iWin) return;
-
-          // Hide header + share-btn
-          var hideStyle = iDoc.createElement('style');
-          hideStyle.textContent = '\
-            .header { display: none !important; }\
-            .share-btn { display: none !important; }\
-          ';
-          iDoc.head.appendChild(hideStyle);
-
-          // Scale content to fit: measure real content height, account for nav bar
-          setTimeout(function() {
-            var scene = iDoc.querySelector('.scene');
-            if (!scene) return;
-            var navH = 56;
-            var viewH = iWin.innerHeight || 700;
-            var availH = viewH - navH - 8; // space below nav + bottom margin
-
-            // Measure actual content height (sum of visible flex children)
-            var contentH = 0;
-            var kids = scene.children;
-            for (var i = 0; i < kids.length; i++) {
-              var el = kids[i];
-              if (el.offsetHeight > 0 && iWin.getComputedStyle(el).display !== 'none') {
-                contentH += el.offsetHeight;
-              }
-            }
-            // Fallback: use scene scrollHeight
-            if (contentH < 100) contentH = scene.scrollHeight || viewH;
-
-            if (contentH > availH) {
-              var z = availH / contentH;
-              scene.style.zoom = z.toFixed(3);
-            }
-            // Push scene down to clear nav bar
-            scene.style.marginTop = navH + 'px';
-            // Reduce scene height so zoomed content + marginTop fits in viewport
-            scene.style.height = availH + 'px';
-          }, 80);
-
-          // Touch forwarding for horizontal swipe
-          var iTouchX = 0, iTouchY = 0, iTouchTime = 0;
-          iWin.addEventListener('touchstart', function(e) {
-            iTouchX = e.touches[0].clientX;
-            iTouchY = e.touches[0].clientY;
-            iTouchTime = Date.now();
-          }, { passive: true });
-          iWin.addEventListener('touchend', function(e) {
-            var dx = iTouchX - e.changedTouches[0].clientX;
-            var dy = iTouchY - e.changedTouches[0].clientY;
-            if (Date.now() - iTouchTime < 500 && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-              if (dx > 0) goTo(currentIndex + 1);
-              else goTo(currentIndex - 1);
-            }
-          }, { passive: true });
-        } catch(e) { /* cross-origin guard */ }
-      }
-      if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
-        onIframeReady();
-      } else {
-        iframe.addEventListener('load', onIframeReady);
+      // Only inject if iframe has been loaded (has src set)
+      if (iframe.src) {
+        injectSingleIframeTouchListeners(iframe);
       }
     });
   }
