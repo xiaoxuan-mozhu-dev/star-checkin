@@ -581,34 +581,15 @@ function detectApiBase(){
 }
 var _serverStateLoaded=false;
 function loadState(){
-  var s=localStorage.getItem('sc2_data');if(s){try{litMap=JSON.parse(s)}catch(e){litMap={}}}
-  var mi=localStorage.getItem('sc2_myIdx');if(mi!==null)myLitIndex=parseInt(mi);
-  // Load from server (async, will update display after)
-  var base=detectApiBase();
-  if(base){
-    var xhr=new XMLHttpRequest();
-    xhr.open('GET',base+'/state',true);
-    xhr.onload=function(){
-      if(xhr.status===200){
-        try{
-          var sv=JSON.parse(xhr.responseText);
-          if(sv.cells&&Object.keys(sv.cells).length>0){
-            // Server data wins - merge: server cells + any local-only cells
-            var merged={};
-            for(var k in sv.cells)merged[k]=sv.cells[k];
-            for(var k in litMap){if(!merged[k])merged[k]=litMap[k]}
-            litMap=merged;
-            localStorage.setItem('sc2_data',JSON.stringify(litMap));
-            _serverStateLoaded=true;
-            buildGrid();
-          }
-        }catch(e){}
-      }
-    };
-    xhr.onerror=function(){};
-    xhr.send();
-  }
+  litMap={"1": "Heidi", "2": "忘忧君", "3": "守夜人", "4": "Aurora", "5": "天线", "7": "彬彬", "8": "壳壳", "9": "方大锤", "10": "老崔", "11": "晓语", "12": "清欢", "13": "清风", "14": "y~", "15": "胖虎", "16": "绵", "17": "威尔伯", "18": "Isabella", "20": "阿山", "21": "王剑", "22": "李飞", "23": "吴", "24": "凌飞", "26": "申律", "27": "新心", "28": "山风中", "29": "石八方"};
+  myLitIndex=-1;
+  var mt=document.getElementById('mainTitle'),st=document.getElementById('subTitle');
+  if(mt)mt.textContent='';
+  if(st)st.textContent='';
+  loadTitleInputs();
+  buildGrid();
 }
+
 function syncToServer(base){
   var xhr=new XMLHttpRequest();
   xhr.open('POST',base+'/sync',true);

@@ -616,32 +616,15 @@ function detectApiBase(){
 }
 var _serverStateLoaded=false;
 function loadState(){
-  var s=localStorage.getItem('sc5_data');if(s){try{litMap=JSON.parse(s)}catch(e){litMap={}}}
-  var mi=localStorage.getItem('sc5_myIdx');if(mi!==null)myLitIndex=parseInt(mi);
-  var base=detectApiBase();
-  if(base){
-    var xhr=new XMLHttpRequest();
-    xhr.open('GET',base+'/state',true);
-    xhr.onload=function(){
-      if(xhr.status===200){
-        try{
-          var sv=JSON.parse(xhr.responseText);
-          if(sv.cells&&Object.keys(sv.cells).length>0){
-            var merged={};
-            for(var k in sv.cells)merged[k]=sv.cells[k];
-            for(var k in litMap){if(!merged[k])merged[k]=litMap[k]}
-            litMap=merged;
-            localStorage.setItem('sc5_data',JSON.stringify(litMap));
-            _serverStateLoaded=true;
-            buildGrid();
-          }
-        }catch(e){}
-      }
-    };
-    xhr.onerror=function(){};
-    xhr.send();
-  }
+  litMap={"0": "石八方", "1": "清欢", "3": "晓语", "4": "天线", "7": "清风", "8": "方大锤", "9": "阿山", "12": "彬彬", "13": "李飞", "14": "绵", "15": "申律", "17": "Vicky", "18": "王剑", "19": "新心", "20": "胖虎", "21": "忘忧君", "22": "老崔", "23": "凌飞", "24": "山风中", "25": "吴", "26": "Aurora", "27": "壳壳", "29": "威尔伯", "30": "守夜人"};
+  myLitIndex=-1;
+  var mt=document.getElementById('mainTitle'),st=document.getElementById('subTitle');
+  if(mt)mt.textContent='';
+  if(st)st.textContent='';
+  loadTitleInputs();
+  buildGrid();
 }
+
 function syncToServer(base){
   var xhr=new XMLHttpRequest();
   xhr.open('POST',base+'/sync',true);

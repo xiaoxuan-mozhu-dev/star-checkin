@@ -377,16 +377,15 @@ function adminReset(){
 }
 function saveState(){} // Server manages state
 function loadState(){
-  litMap={"cells": {"0": "天线", "1": "Aurora", "3": "清欢", "4": "Vickyyyyyy", "5": "壳壳", "6": "守夜", "9": "老崔", "10": "新心", "11": "Isabella", "12": "申律", "13": "凌飞", "14": "山风中", "15": "邓斌", "16": "锤锤", "17": "忘忧君", "18": "绵", "19": "彬彬", "20": "王剑", "22": "清风", "23": "胖虎", "24": "吴", "25": "威尔伯", "26": "石八方", "27": "李飞", "28": "晓语", "30": "阿山", "31": "高燕", "32": "Heidi"}, "title": "AI编程课-1班", "subtitle": "第1课 编程入门", "order": [30, 23, 24, 10, 11, 12, 16, 17, 22, 28, 5, 25, 32, 19, 14, 18, 0, 9, 27, 13, 4, 6, 3, 15, 20, 26, 31, 1]}.cells||{};
+  litMap={"0": "天线", "1": "Aurora", "3": "清欢", "4": "Vickyyyyyy", "5": "壳壳", "6": "守夜", "9": "老崔", "10": "新心", "11": "Isabella", "12": "申律", "13": "凌飞", "14": "山风中", "15": "邓斌", "16": "锤锤", "17": "忘忧君", "18": "绵", "19": "彬彬", "20": "王剑", "22": "清风", "23": "胖虎", "24": "吴", "25": "威尔伯", "26": "石八方", "27": "李飞", "28": "晓语", "30": "阿山", "31": "高燕", "32": "Heidi"};
   myLitIndex=-1;
+  var mt=document.getElementById('mainTitle'),st=document.getElementById('subTitle');
+  if(mt)mt.textContent='AI编程课-1班';
+  if(st)st.textContent='第1课 编程入门';
+  loadTitleInputs();
   buildGrid();
-}}}
-    /* Only update titles if not currently editing */
-    var mt=document.getElementById('mainTitle'),st=document.getElementById('subTitle');
-    if(d.title)mt.textContent=d.title;if(d.subtitle)st.textContent=d.subtitle;loadTitleInputs();
-    if(!document.getElementById('nameModal').classList.contains('show'))buildGrid();
-  }).catch(function(e){console.error(e);if(!document.getElementById('nameModal').classList.contains('show'))buildGrid()});
 }
+
 
 /* titles loaded from server via loadState */
 
@@ -472,7 +471,7 @@ function shareImage(){
 }
 
 
-loadState();// Static version - no auto refresh
+loadState();
 </script>
 </body>
 </html>
