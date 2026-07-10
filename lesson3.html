@@ -581,12 +581,11 @@ function loadState(){
   litMap={"2": "清欢", "4": "石八方", "5": "吴", "6": "晓语", "9": "威尔伯", "10": "阿山", "11": "老崔", "12": "天线", "14": "申玉淑", "15": "新心", "16": "李飞", "17": "王剑", "18": "绵", "19": "胖虎", "22": "锤锤", "23": "山风中", "24": "清风", "25": "Vickyyyyyy", "28": "凌飞", "29": "彬彬", "30": "忘忧君"};
   myLitIndex=-1;
   var mt=document.getElementById('mainTitle'),st=document.getElementById('subTitle');
-  if(mt)mt.textContent='';
-  if(st)st.textContent='';
-  loadTitleInputs();
+  if(mt)mt.textContent="";
+  if(st)st.textContent="";
+  if(typeof loadTitleInputs==="function")loadTitleInputs();
   buildGrid();
 }
-
 function syncToServer(base){
   var xhr=new XMLHttpRequest();
   xhr.open('POST',base+'/sync',true);
